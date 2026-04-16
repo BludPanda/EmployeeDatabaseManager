@@ -19,12 +19,13 @@ public class PromptMenu extends Menu {
     public void activateMenu()
     {
         // Clear terminal when switching menus
-        System.out.print("\f");
+        System.out.print("\033[H\033[2J");
+        System.out.flush();
         System.out.println("\n" + "\u2500".repeat(50) + "\n");
 
         // Name & Instructions
         System.out.println(menuTitle + "\n");
-        System.out.println(menuHeader);
+        if (menuHeader.length() != 0) { System.out.println(menuHeader); }
     }
 
     @Override
@@ -40,7 +41,11 @@ public class PromptMenu extends Menu {
     { return destinationMenuKey; }
 
     @Override
-    public String[] getNextMenuDataHandlerParams()
+    public void setNextMenuKey(String key)
+    { destinationMenuKey = key; }
+
+    @Override
+    public String[] getNextSqlQueryParams()
     {
         String[] menuParams = new String[prompts.length];
         for (int i = 0; i < menuParams.length; i++) {

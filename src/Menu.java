@@ -4,7 +4,7 @@ public abstract class Menu {
     protected String menuHeader;
     private int numPrompts = 1;
 
-    private String dataHandlerKey = "None";
+    private String sqlQueryKey = "None";
     private String[] dataHandlerParams;
 
     public Menu(String menuTitle, String menuHeader)
@@ -20,6 +20,8 @@ public abstract class Menu {
         this.numPrompts = numPrompts;
     }
 
+    // ================================================= //
+
     public PromptType getPromptType(int promptIndex)
     { return null; }
 
@@ -28,18 +30,6 @@ public abstract class Menu {
 
     public String getMenuName()
     { return menuTitle; }
-
-    public String getDataHandlerKey()
-    { return dataHandlerKey; }
-
-    public void setDataHandlerKey(String dataHandlerKey)
-    { this.dataHandlerKey = dataHandlerKey; }
-
-    public String[] getMenuDataHandlerParams()
-    { return dataHandlerParams; }
-
-    public void setMenuDataHandlerParams(String[] params)
-    { dataHandlerParams = params; }
 
     public void activateMenu()
     { }
@@ -56,6 +46,23 @@ public abstract class Menu {
     public String getNextMenuKey()
     { return ""; }
 
-    public String[] getNextMenuDataHandlerParams()
+    public void setNextMenuKey(String key)
+    { }
+
+    // ================================================= //
+
+    public String getSqlQueryKey()
+    { return sqlQueryKey; }
+
+    public void setSqlQueryKey(String SqlQueryKey)
+    { this.sqlQueryKey = SqlQueryKey; }
+
+    public String[] getSqlQueryParams()
+    { return dataHandlerParams; }
+
+    public void setSqlQueryParams(String[] params)
+    { dataHandlerParams = params; }
+
+    public String[] getNextSqlQueryParams()
     { return new String[0]; }
 }
