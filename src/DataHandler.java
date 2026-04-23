@@ -1,4 +1,7 @@
 
+import java.sql.*;
+
+
 public class DataHandler {
     
     protected static SQLConnector mySQLConnector = new SQLConnector();
@@ -50,22 +53,55 @@ public class DataHandler {
 
     // =============================== VERIFICATION =============================== //
 
+    
     public int verifyUsername(String name)
     {
         // name = "first last" *includes space*
         // return the empID of the matching employee else return -1
+        String[] nameParts = name.split(" ");
+        String sql = "SELECT empID FROM employees WHERE Fname = '" + nameParts[0] + "' AND Lname = '" + nameParts[1] + "'";
+
+        ResultSet rs = mySQLConnector.executeQuery(sql);
+        try {
+            if (rs != null && rs.next()) {
+                return rs.getInt("empID");
+            }
+        } catch (SQLException e) {
+            System.out.println("Credential error: " + e.getMessage());
+        }
         
-        return 1; //temp return
+        return -1; //temp return
     }
 
     public boolean verifyPassword(int empID, String password)
     {
-        return true; //temp return
+        String sql = "Select empid from employees where empID = " + empID + " and password = '" + password + "'";
+        // SQL result 
+        ResultSet rs = mySQLConnector.executeQuery(sql);
+        try {
+            if (rs != null && rs.next()) {
+                return true;
+            }
+        } catch (SQLException e) {
+            System.out.println("Credential error: " + e.getMessage());
+        }
+
+        return false; //temp return
     }
 
     public boolean checkAdmin(int empID)
     {
-        return true; //temp return
+        String sql = "Select empid from employees where empID = " + empID + " and role = ' HR Admin'";
+        // SQL result
+        ResultSet rs = mySQLConnector.executeQuery(sql);
+        try {
+            if (rs != null && rs.next()) {
+                return true; // Admin
+            }
+        } catch (SQLException e) {
+            System.out.println("Credential error: " + e.getMessage());
+        }
+        return false; // Not admin
     }
 
     // =============================== EMPLOYEE SUMMARY & PAY STATEMENTS =============================== //
@@ -75,6 +111,22 @@ public class DataHandler {
         // Employee summary for the user or for a searched employee
         // Probably go over basic information about employee -- include stuff that is editable [method below]
         // Also maybe include whether they are currently working
+        String sql = "SELECT * FROM employees WHERE empID = " + empID;
+        ResultSet rs = mySQLConnector.executeQuery(sql);
+        try {
+            if (rs != null && rs.next()) {
+                System.out.println("\n--- Employee Info ---");
+                System.out.println("ID:   " + rs.getInt("empID"));
+                System.out.println("Name: " + rs.getString("name"));
+                System.out.println("DOB:  " + rs.getString("dob"));
+                System.out.println("SSN:  " + rs.getString("ssn"));
+                System.out.println("Role: " + rs.getString("role"));
+            } else {
+                System.out.println("No employee found with ID: " + empID);
+            }
+        } catch (SQLException e) {
+            System.out.println("Database error during employee summary: " + e.getMessage());
+        }
     }
 
     public void printEditedEmployeeSummary(String[] editPrompts, int empID)
