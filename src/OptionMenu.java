@@ -21,12 +21,13 @@ public class OptionMenu extends Menu {
     public void activateMenu()
     {
         // Clear terminal when switching menus
-        System.out.print("\f");
+        System.out.print("\033[H\033[2J");
+        System.out.flush();
         System.out.println("\n" + "\u2500".repeat(50) + "\n");
 
         // Name & Instructions
         System.out.println(menuTitle + "\n");
-        System.out.println(menuHeader);
+        if (menuHeader.length() != 0) { System.out.println(menuHeader); }
 
         // List Options
         for (int i = 0; i < options.length; i++)

@@ -6,21 +6,38 @@ import java.util.Scanner;
 
 public class UserInterface {
 
-    static Scanner input = new Scanner(System.in);
+    // UI variables
+    private static Scanner input = new Scanner(System.in);
 
-    static Map<String, Menu> menus = new Hashtable<>();
-    static Menu currentMenu;
+    private static MenuCreator menuCreator = new MenuCreator();
+    private static Map<String, Menu> menus = new Hashtable<>();
+    private static Menu currentMenu;
+    private static String currentInvalidPromptWarning = "";
 
-    static Map<String, DataHandler> dataHandlers = new Hashtable<>();
-    
+    // Data handler -- SQL logic class
+    private static DataHandler dataHandler = new DataHandler();
+
+    // Variables reflecting the user generated during log in
+    private static boolean isAdmin = false;
+    private static int currentEmpID;
+
+    // Temp variables for cross menu communication
+    private static int currentSearchedEmpID;
+    private static String[] currentSearchedParams;
+    private static String[] currentSearchedSalaryRange;
+
+    // =========================================================================== //
+
+    // MAIN METHOD:
+
+    // =========================================================================== //
 
     public static void main(String[] args) {
 
         // ============================================ //
 
         // Create menus and options
-        createMenus();
-        createDataHandlers();
+        menuCreator.createStartMenus(menus);
 
         // Start menu
         currentMenu = menus.get("start");
@@ -61,7 +78,7 @@ public class UserInterface {
                 else
                 {
                     currentMenu.activateMenu();
-                    System.out.println("Input is not valid, please try again...");
+                    System.out.println("Warning: " + currentInvalidPromptWarning);
                     i--;
                 }
             }
@@ -77,12 +94,12 @@ public class UserInterface {
             if (menus.get(destinationMenuKey) == null)
             { validMenu = false; break; }
 
-            // Does next menu have a related data handler?
-            String dataHandlerKey = menus.get(destinationMenuKey).getDataHandlerKey();
+            // Does next menu have a related SQL query?
+            String sqlQueryKey = menus.get(destinationMenuKey).getSqlQueryKey();
   
             // Give params to next menu for data handling on next loop
-            if (dataHandlerKey != "None")
-            { menus.get(destinationMenuKey).setMenuDataHandlerParams(currentMenu.getNextMenuDataHandlerParams()); }
+            if (sqlQueryKey != "None")
+            { menus.get(destinationMenuKey).setSqlQueryParams(currentMenu.getNextSqlQueryParams()); }
 
             // Go to next menu!
             currentMenu = menus.get(destinationMenuKey);
@@ -91,22 +108,88 @@ public class UserInterface {
         invalidMenuError();
     }
 
+    // =========================================================================== //
+
+    // SQL QUERY TRIGGER FOR MENUS:
+
+    // =========================================================================== //
+
+    // This method runs when a menu is linked with an SQL query, triggered when opening that menu. Previous prompt
+    // answers can be fed into the upcoming menu!
+
     private static void runDataHandler()
     {
-        String dataHandlerKey = currentMenu.getDataHandlerKey();
-        DataHandler dataHandler = dataHandlers.get(dataHandlerKey);
+        String sqlQueryKey = currentMenu.getSqlQueryKey();
 
-        if (dataHandlerKey != "None" && dataHandler == null)
+        if (sqlQueryKey != "None" && dataHandler == null)
         { invalidDataHandlerError(); }
 
-        else if (dataHandlerKey != "None" && dataHandler != null)
+        else if (sqlQueryKey != "None" && dataHandler != null)
         {
-            // Trigger data handler / SQL output would go here
-            System.out.println("===================================");
-            //dataHandler.executeAndReport(currentMenu.getMenuDataHandlerParams());
-            System.out.println("===================================");
+            System.out.println("----------------------------------------------------");
+
+            String[] params = currentMenu.getSqlQueryParams(); // params are a list of the user's prompts from the previous menu
+
+            switch(sqlQueryKey) {
+
+                case "dummyMethod":
+                    dataHandler.dummyMethod(params);
+                    break;
+
+                case "printUserEmployeeSummary":
+                    dataHandler.printEmployeeSummary(currentEmpID);
+                    break;
+
+                case "printUserPayStatements":
+                    dataHandler.printUserPayStatements(currentEmpID);
+                    break;
+
+                case "printSearchedEmployeeSummary":
+                    dataHandler.printEmployeeSummary(currentSearchedEmpID);
+                    currentSearchedParams = new String[4];
+                    break;
+
+                case "printEditedEmployeeSummary":
+                    dataHandler.printEditedEmployeeSummary(params, currentSearchedEmpID);
+                    break;
+
+                case "printNumberOfSalariesWithinRange":
+                    currentSearchedSalaryRange = params;
+                    dataHandler.printNumberOfSalariesWithinRange(params);
+                    break;
+
+                case "printUpdatedSalariesWithinRange":
+                    dataHandler.printUpdatedSalariesWithinRange(currentSearchedSalaryRange, params[0]);
+                    break;
+
+                case "printTotalPayForThisMonthByJobRole":
+                    dataHandler.printTotalPayForThisMonthByJobRole(params[0]);
+                    break;
+
+                case "printTotalPayForThisMonthByDivision":
+                    dataHandler.printTotalPayForThisMonthByDivision(params[0]);
+                    break;
+
+                case "printListOfAllAdmins":
+                    dataHandler.printListOfAllAdmins();
+                    break;
+
+                case "addAdmin":
+                    dataHandler.addAdmin(currentSearchedEmpID);
+                    break;
+
+                case "removeAdmin":
+                    dataHandler.removeAdmin(currentSearchedEmpID);
+                    break;
+            }
+            
+            System.out.println("----------------------------------------------------");
         }
     }
+
+    // =========================================================================== //
+
+    // ERROR & CLOSE PROGRAM:
 
     // =========================================================================== //
 
@@ -137,75 +220,21 @@ public class UserInterface {
 
     // =========================================================================== //
 
-    private static void createMenus()
-    {
-        Option[] options;
-        Prompt[] prompts;
-
-        // START
-        options = new Option[] {
-            new Option("Login", "login"),
-            new Option("Exit Application", "*ExitApp*"),
-        };
-        Menu start = new OptionMenu(
-            "Employee Management System", 
-            "Login To Start", 
-            options);
-        menus.put("start", start);
-
-        // LOGIN
-        prompts = new Prompt[] {
-            new Prompt(PromptType.Username, "Enter Username"),
-            new Prompt(PromptType.Password, "Enter Password"),
-        };
-        Menu login = new PromptMenu(
-            "Login In To System", 
-            "Enter Your Username & Password", 
-            prompts,
-            "primaryGeneral");
-        menus.put("login", login);
-
-        // PRIMARY GENERAL
-        options = new Option[] {
-            new Option("TEST DATA HANDLER", "test"),
-            new Option("Your Employee Summary", "NA"),
-            new Option("Your Pay Statements", "NA"),
-            new Option("Switch User", "NA")
-        };
-        Menu primaryGeneral = new OptionMenu(
-            "Employee Management System", 
-            "Welcome Employee", 
-            options);
-        menus.put("primaryGeneral", primaryGeneral);
-
-        // TESTING DATA HANDLER
-        prompts = new Prompt[] {
-            new Prompt(PromptType.Next, "Enter To Go Back"),
-        };
-        Menu test = new PromptMenu(
-            "This is to test that the data handler is triggered", 
-            "...",
-            prompts,
-            "primaryGeneral");
-        test.setDataHandlerKey("test");
-        menus.put("test", test);
-    }
-
-    private static void createDataHandlers()
-    {
-        // TEST
-        DataHandler test = new DataHandler_Test();
-        dataHandlers.put("test", test);
-    }
+    // PROMPT VALIDATION:
 
     // =========================================================================== //
 
     private static Boolean validatePrompt(String prompt, PromptType promptType)
     {
+        currentInvalidPromptWarning = "";
+        
         Boolean validPrompt = false;
         if (prompt == null) { return false; }
 
         switch(promptType) {
+
+            // =============== BASIC =============== //
+
             case PromptType.Index:
                 if (prompt.length() == 1 || prompt.length() == 2) 
                 {
@@ -216,30 +245,294 @@ public class UserInterface {
                         { validPrompt = true; }
                     } catch (NumberFormatException nfe) {}
                 }
+                if (!validPrompt) { currentInvalidPromptWarning = "'" + prompt + "' is not a valid index [#]"; }
                 break;
-            case PromptType.GenericName:
-                if (prompt.length() < 50 && prompt.length() > 0) 
-                { 
-                    validPrompt = true;
-                }
-                break;
-            case PromptType.Username:
-                if (prompt.length() < 50 && prompt.length() > 0) 
-                { 
-                    // Add more rules here
-                    validPrompt = true;
-                }
-                break;
-            case PromptType.Password:
-                if (prompt.length() < 50 && prompt.length() > 0) 
-                { 
-                    // Add more rules here
-                    validPrompt = true;
-                }
-                break;
+
             case PromptType.Next:
                 validPrompt = true;
                 break;
+
+            case PromptType.Text:
+                validPrompt = true;
+                break;
+
+            // =============== LOGIN =============== //
+
+            case PromptType.Username:
+                if (prompt.length() < 50 && prompt.length() > 0) 
+                { 
+                    int empID = dataHandler.verifyUsername(prompt);
+                    if (empID != -1)
+                    {
+                        if (prompt.contains(" ") && prompt.indexOf(" ") != prompt.length() - 1)
+                        { 
+                            currentEmpID = empID;
+                            validPrompt = true;
+                        }
+                        else { currentInvalidPromptWarning = "Username must be a first and last named separated by a space"; }
+                    }
+                    else { currentInvalidPromptWarning = "Username not found"; }
+                }
+                else { currentInvalidPromptWarning = "Username is too long or short"; }
+                break;
+
+            case PromptType.Password:
+                if (prompt.length() < 50 && prompt.length() > 0) 
+                { 
+                    if (dataHandler.verifyPassword(currentEmpID, prompt))
+                    {
+                        //Once logged in create general menus or admin menus
+                        isAdmin = dataHandler.checkAdmin(currentEmpID);
+                        if (isAdmin) {
+                            menuCreator.createAdminMenus(menus);
+                            currentMenu.setNextMenuKey("primaryAdmin");
+                        }
+                        else {
+                            menuCreator.createGeneralMenus(menus);
+                            currentMenu.setNextMenuKey("primaryGeneral");
+                        }
+                        
+                        validPrompt = true;
+                    }
+                }
+                if (!validPrompt) { currentInvalidPromptWarning = "Password is incorrect"; }
+                break;
+
+            // =============== EMPLOYEE SEARCH =============== //
+
+            case PromptType.SearchEmpName:
+                if (prompt.equals("next")) 
+                { validPrompt = true; }
+                else if  (prompt.length() < 50 && prompt.length() > 0) 
+                { 
+                    if (prompt.contains(" ") && prompt.indexOf(" ") != prompt.length() - 1)
+                    {
+                        currentSearchedParams = new String[4];
+                        currentSearchedParams[0] = prompt;
+                        validPrompt = true;
+                    }
+                    else { currentInvalidPromptWarning = "Name must contain space between first and last name"; }
+                }
+                else { currentInvalidPromptWarning = "Name is too long or short"; }
+                break;
+
+            case PromptType.SearchEmpDateOfBirth:
+                if (prompt.equals("next")) 
+                { validPrompt = true; }
+                else if (prompt.length() == 8 && prompt.contains("/")) 
+                { 
+                    try {
+                        int month = Integer.parseInt(prompt.substring(0, 2));
+                        int day = Integer.parseInt(prompt.substring(3, 5));
+                        int year = Integer.parseInt(prompt.substring(6, 8));
+
+                        if (month >= 0 && month <= 12 && day > 0 && day < 31 && year > -1 && year < 100)
+                        {
+                            currentSearchedParams[1] = prompt;
+                            validPrompt = true;
+                        }
+                    } catch (NumberFormatException nfe) {}
+                }
+                if (!validPrompt) { currentInvalidPromptWarning = "Date must be in this format: MM/DD/YY and contain possible dates"; }
+                break;
+
+            case PromptType.SearchEmpSSN:
+                if (prompt.equals("next")) 
+                { validPrompt = true; }
+                else if (prompt.length() == 9) 
+                { 
+                    try {
+                        int num = Integer.parseInt(prompt);
+                        currentSearchedParams[2] = prompt;
+                        validPrompt = true;
+                    } catch (NumberFormatException nfe) {}
+                }
+                if (!validPrompt) { currentInvalidPromptWarning = "SSN must be 9 characters long and consist of only numbers \n Don't include dashes"; }
+                break;
+            
+            case PromptType.SearchEmpID:
+                currentMenu.setNextMenuKey("primaryAdmin");
+                if (prompt.length() > 0) 
+                {
+                    try {
+                        int num = Integer.parseInt(prompt);
+                        if (num >= 0)
+                        {
+                            currentSearchedParams[3] = prompt;
+                            currentSearchedEmpID = dataHandler.checkIfEmployeeExists(currentSearchedParams);
+
+                            if (currentSearchedEmpID < 0)
+                            {
+                                if (currentSearchedEmpID == -1)
+                                { currentMenu.setNextMenuKey("searchEmpErrorNoEmployeesFound"); }
+                                if (currentSearchedEmpID == -2)
+                                { currentMenu.setNextMenuKey("searchEmpErrorMultipleEmployeesFound"); }
+                                if (currentSearchedEmpID == -3)
+                                { currentMenu.setNextMenuKey("searchEmpErrorNoSearchInfo"); }
+                            }
+                            else
+                            { currentMenu.setNextMenuKey("searchedEmployeeSummary"); }
+                            
+                            validPrompt = true;
+                        }
+                    } catch (NumberFormatException nfe) {}
+                }
+                else { currentInvalidPromptWarning = "EmpID must be a number bigger than 0"; }
+                break;
+
+            // =============== ADMIN SEARCH =============== //
+
+            case PromptType.SearchAdminEmpID:
+                currentMenu.setNextMenuKey("adminList");
+                if (prompt.length() > 0) 
+                {
+                    try {
+                        int num = Integer.parseInt(prompt);
+                        if (num >= 0)
+                        {
+                            if (num != currentEmpID)
+                            {
+                                String[] newParams = new String[] {"None", "None", "None", prompt};
+                                currentSearchedEmpID = dataHandler.checkIfEmployeeExists(newParams);
+
+                                if (currentSearchedEmpID < 0)
+                                {
+                                    if (currentSearchedEmpID == -1)
+                                    { currentMenu.setNextMenuKey("searchAdminErrorNoEmployeesFound"); }
+                                    if (currentSearchedEmpID == -2)
+                                    { currentMenu.setNextMenuKey("searchAdminErrorMultipleEmployeesFound"); }
+                                    if (currentSearchedEmpID == -3)
+                                    { currentMenu.setNextMenuKey("searchAdminErrorNoSearchInfo"); }
+                                }
+
+                                validPrompt = true;
+                            }
+                            else { currentInvalidPromptWarning = "Cannot remove yourself"; }
+                        }
+                        else { currentInvalidPromptWarning = "EmpID must be bigger or equal to 0"; }
+                    } catch (NumberFormatException nfe) {}
+                }
+                else { currentInvalidPromptWarning = "EmpID must be a number"; }
+                break;
+
+            // =============== SALARY =============== //
+
+            case PromptType.SalaryRangeLower:
+                if (prompt.length() > 0) 
+                {
+                    if (prompt.indexOf("$") == 0) { prompt = prompt.substring(1); }
+                    try {
+                        int num = Integer.parseInt(prompt);
+                        if (num >= 0)
+                        {
+                            currentSearchedSalaryRange = new String[2];
+                            currentSearchedSalaryRange[0] = prompt;
+                            validPrompt = true;
+                        }
+                    } catch (NumberFormatException nfe) {}
+                }
+                if (!validPrompt) { currentInvalidPromptWarning = "Enter a valid value like '$30000, no commas'"; }
+                break;
+
+            case PromptType.SalaryRangeUpper:
+                if (prompt.length() > 0) 
+                {
+                    if (prompt.indexOf("$") == 0) { prompt = prompt.substring(1); }
+                    try {
+                        int num = Integer.parseInt(prompt);
+                        if (num >= 0)
+                        {
+                            currentSearchedSalaryRange[1] = prompt;
+                            validPrompt = true;
+                        }
+                    } catch (NumberFormatException nfe) {}
+                }
+                if (!validPrompt) { currentInvalidPromptWarning = "Enter a valid value like '$30000, no commas'"; }
+                break;
+
+            case PromptType.Percentage:
+                if (prompt.length() > 0) 
+                {
+                    if (prompt.contains("%")) { prompt = prompt.substring(0, prompt.indexOf("%")); }
+                    try {
+                        int num = Integer.parseInt(prompt);
+                        if (num >= 1 && num <= 500)
+                        { validPrompt = true; }
+                    } catch (NumberFormatException nfe) {}
+                }
+                if (!validPrompt) { currentInvalidPromptWarning = "Enter a valid percentage like '40%'"; }
+                break;
+
+            // =============== LABOR REPORT =============== //
+
+            case PromptType.JobRoleOrDivision:
+                if  (prompt.length() < 50 && prompt.length() > 0) 
+                { validPrompt = true; }
+                if (!validPrompt) { currentInvalidPromptWarning = "Title is too long or short"; }
+                break;
+
+            // =============== EDIT EMPLOYEE =============== //
+
+            case PromptType.EditName:
+                if (prompt.equals("next")) 
+                { validPrompt = true; }
+                else if (prompt.length() < 50 && prompt.length() > 0) 
+                { 
+                    if (prompt.contains(" ") && prompt.indexOf(" ") != prompt.length() - 1)
+                    { validPrompt = true; }
+                    else { currentInvalidPromptWarning = "Name must be a first and last named separated by a space"; }
+                }
+                else { currentInvalidPromptWarning = "Name is too long or short"; }
+                break;
+            
+            case PromptType.EditJobRoleOrDivision:
+                if (prompt.equals("next")) 
+                { validPrompt = true; }
+                else if  (prompt.length() < 100 && prompt.length() > 0) 
+                { validPrompt = true; }
+                if (!validPrompt) { currentInvalidPromptWarning = "Title is too long or short"; }
+                break;
+
+            case PromptType.EditEmail:
+                if (prompt.equals("next")) 
+                { validPrompt = true; }
+                else if  (prompt.length() < 100 && prompt.length() > 0) 
+                { validPrompt = true; }
+                if (!validPrompt) { currentInvalidPromptWarning = "Email is too long or short"; }
+                break;
+
+            case PromptType.EditPhone:
+                if (prompt.equals("next")) 
+                { validPrompt = true; }
+                else if  (prompt.length() == 14) 
+                { validPrompt = true; }
+                if (!validPrompt) { currentInvalidPromptWarning = "Input number in the format (###)-###-####"; }
+                break;
+
+            case PromptType.EditAddressStreet:
+                if (prompt.equals("next")) 
+                { validPrompt = true; }
+                else if  (prompt.length() < 50 && prompt.length() > 0) 
+                { validPrompt = true; }
+                if (!validPrompt) { currentInvalidPromptWarning = "Street is too long or short"; }
+                break;
+
+            case PromptType.EditAddressCity:
+                if (prompt.equals("next")) 
+                { validPrompt = true; }
+                else if  (prompt.length() < 50 && prompt.length() > 0) 
+                { validPrompt = true; }
+                if (!validPrompt) { currentInvalidPromptWarning = "City is too long or short"; }
+                break;
+
+            case PromptType.EditAddressState:
+                if (prompt.equals("next")) 
+                { validPrompt = true; }
+                else if  (prompt.length() == 2 && dataHandler.allStates.contains(prompt)) 
+                { validPrompt = true; }
+                if (!validPrompt) { currentInvalidPromptWarning = "State must be a two letter captial abbreviation"; }
+                break;
+
             }
 
         return validPrompt;

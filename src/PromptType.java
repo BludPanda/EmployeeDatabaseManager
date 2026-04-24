@@ -1,3 +1,23 @@
 public enum PromptType {
-    Index, GenericName, Username, Password, Next
+    Index,
+    Next,
+    Text,
+    Username,
+    Password, 
+    SearchEmpName,
+    SearchEmpDateOfBirth,
+    SearchAdminEmpID,
+    SearchEmpID,
+    SearchEmpSSN,
+    SalaryRangeLower,
+    SalaryRangeUpper,
+    Percentage,
+    JobRoleOrDivision,
+    EditName,
+    EditJobRoleOrDivision,
+    EditEmail,
+    EditPhone,
+    EditAddressStreet,
+    EditAddressCity,
+    EditAddressState
 }
