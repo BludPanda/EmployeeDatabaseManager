@@ -287,7 +287,7 @@ public class DataHandler {
         if (!editPrompts[0].equalsIgnoreCase("next") && editPrompts[0].length() > 0)
         { 
             v_newFirstName = nameParts[0];
-            v_newFirstName = nameParts[1];
+            v_newLastName = nameParts[1];
         }
 
         // Job title
@@ -308,7 +308,7 @@ public class DataHandler {
 
         // Email
         if (!editPrompts[5].equalsIgnoreCase("next"))
-        { v_newAddress = editPrompts[5]; }
+        { v_newAddress = editPrompts[5] + ", " + editPrompts[6] + ", " + editPrompts[7]; }
 
         // Execute changes
         mySQLConnector.updateEmployee(empID, v_newFirstName, v_newLastName, v_newEmail, v_newPhone, v_newAddress, v_newDivisionName, v_newJobTitle);
@@ -513,8 +513,29 @@ public class DataHandler {
 
         try (ResultSet rs = mySQLConnector.executeQuery(sql))
         {
-            if (rs != null && rs.next())
+            while (rs != null && rs.next())
             { System.out.println("\n" + rs.getString("divisionName") + ": $" + rs.getInt("totalLaborCost")); }
+            rs.getStatement().getConnection().close();
+        } catch (SQLException e) { System.out.println("SQL Error: " + e.getMessage()); }
+    }
+
+    public void printRecentHires()
+    {
+        String sql = "SELECT e.firstName, e.lastName, p.hireDate, r.jobTitle " +
+             "FROM employees e " +
+             "JOIN payroll p ON e.empID = p.empID " +
+             "JOIN roles r ON e.roleID = r.roleID " +
+             "WHERE p.hireDate >= DATE_SUB(CURDATE(), INTERVAL 60 DAY) " +
+             "ORDER BY p.hireDate DESC;";
+
+        try (ResultSet rs = mySQLConnector.executeQuery(sql))
+        {
+            while (rs != null && rs.next())
+            { System.out.println("\n" + rs.getString("hireDate") + " - "
+                                + rs.getString("firstName") + " "
+                                + rs.getString("lastName") + " - Job Title: "
+                                + rs.getString("jobTitle"));
+                            }
             rs.getStatement().getConnection().close();
         } catch (SQLException e) { System.out.println("SQL Error: " + e.getMessage()); }
     }
@@ -523,7 +544,7 @@ public class DataHandler {
 
     public void printListOfAllAdmins()
     {
-        String sql = "SELECT e.firstName, e.lastName, d.divisionName " +
+        String sql = "SELECT e.empID, e.firstName, e.lastName, d.divisionName " +
              "FROM admins a " +
              "JOIN employees e ON a.empID = e.empID " +
              "JOIN divisions d ON e.divID = d.divID";
@@ -532,7 +553,9 @@ public class DataHandler {
         {
             while (rs != null && rs.next())
             {
-                System.out.println("\nName: " + rs.getString("firstName") + " " + rs.getString("lastName")
+                System.out.println("\nID: " + rs.getInt("empID") 
+                                    + " | Name: " + rs.getString("firstName")
+                                    + " " + rs.getString("lastName")
                                     + " - Divsion: " + rs.getString("divisionName"));
             }
             rs.getStatement().getConnection().close();

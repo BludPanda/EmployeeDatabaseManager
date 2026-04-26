@@ -40,8 +40,7 @@ public class MenuCreator {
         options = new Option[] {
             new Option("Your Employee Summary", "userEmployeeSummary"),
             new Option("Your Pay Statements", "payStatements"),
-            new Option("Switch User", "start"),
-            new Option("TEST", "testPrompts")
+            new Option("Switch User", "start")
         };
         Menu primaryGeneral = new OptionMenu(
             "EMPLOYEE MANAGEMENT SYSTEM", 
@@ -111,6 +110,7 @@ public class MenuCreator {
             new Option("Update Salaries", "updateSalariesRangePrompts"),
             new Option("Labor Report", "laborReport"),
             new Option("Administration", "adminList"),
+            new Option("Recent Hires", "recentHires"),
             new Option("Switch User", "start"),
         };
         Menu primaryAdmin = new OptionMenu(
@@ -353,5 +353,16 @@ public class MenuCreator {
                 "No employees found", prompts,
                     "adminList");
                 menus.put("searchAdminErrorNoEmployeesFound", searchAdminErrorNoEmployeesFound);
+
+            // RECENT HIRES
+            prompts = new Prompt[] {
+                new Prompt(PromptType.Next, "Enter To Go Back") };
+            Menu recentHires = new PromptMenu(
+                "RECENTLY HIRED EMPLOYEES",
+                "Recent hires in past 60 days: ", 
+                prompts, 
+                "primaryAdmin");
+            recentHires.setSqlQueryKey("printRecentHires");
+            menus.put("recentHires", recentHires);
     }
 }

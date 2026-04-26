@@ -81,7 +81,9 @@ public class UserInterface {
                 else
                 {
                     currentMenu.activateMenu();
+                    runDataHandler(); 
                     currentMenu.showOptions();
+
                     System.out.println("Warning: " + currentInvalidPromptWarning);
                     i--;
                 }
@@ -176,6 +178,10 @@ public class UserInterface {
                 case "printListOfAllAdmins":
                     dataHandler.printListOfAllAdmins();
                     break;
+
+                case "printRecentHires":
+                    dataHandler.printRecentHires();
+                    break;
             }
             
             System.out.println("\n----------------------------------------------------");
@@ -202,12 +208,15 @@ public class UserInterface {
 
     private static void closeApplication()
     {
+        
         // Close scanner
         input.close();
 
         // Clear terminal
-        System.out.print("\f");
+        System.out.print("\033[H\033[2J");
+        System.out.flush();
         System.out.println("\n" + "\u2500".repeat(50) + "\n");
+        System.out.println("");
 
         // Clear terminal
         System.out.print("Application Closed");
