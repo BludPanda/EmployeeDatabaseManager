@@ -49,6 +49,9 @@ public abstract class Menu {
     public void setNextMenuKey(String key)
     { }
 
+    public void showOptions()
+    { }
+
     // ================================================= //
 
     public String getSqlQueryKey()

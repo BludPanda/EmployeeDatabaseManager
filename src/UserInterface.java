@@ -53,7 +53,10 @@ public class UserInterface {
             currentMenu.activateMenu();
 
             // Data handler [if applicable] this is the SQL stuff
-            runDataHandler();    
+            runDataHandler();  
+            
+            // Display options if option menu
+            currentMenu.showOptions();
 
             // Prompt
             Boolean validPrompt = false;
@@ -78,6 +81,7 @@ public class UserInterface {
                 else
                 {
                     currentMenu.activateMenu();
+                    currentMenu.showOptions();
                     System.out.println("Warning: " + currentInvalidPromptWarning);
                     i--;
                 }
@@ -146,7 +150,6 @@ public class UserInterface {
 
                 case "printSearchedEmployeeSummary":
                     dataHandler.printEmployeeSummary(currentSearchedEmpID);
-                    currentSearchedParams = new String[4];
                     break;
 
                 case "printEditedEmployeeSummary":
@@ -163,27 +166,19 @@ public class UserInterface {
                     break;
 
                 case "printTotalPayForThisMonthByJobRole":
-                    dataHandler.printTotalPayForThisMonthByJobRole(params[0]);
+                    dataHandler.printTotalPayForThisMonthByJobRole();
                     break;
 
                 case "printTotalPayForThisMonthByDivision":
-                    dataHandler.printTotalPayForThisMonthByDivision(params[0]);
+                    dataHandler.printTotalPayForThisMonthByDivision();
                     break;
 
                 case "printListOfAllAdmins":
                     dataHandler.printListOfAllAdmins();
                     break;
-
-                case "addAdmin":
-                    dataHandler.addAdmin(currentSearchedEmpID);
-                    break;
-
-                case "removeAdmin":
-                    dataHandler.removeAdmin(currentSearchedEmpID);
-                    break;
             }
             
-            System.out.println("----------------------------------------------------");
+            System.out.println("\n----------------------------------------------------");
         }
     }
 
@@ -261,17 +256,17 @@ public class UserInterface {
             case PromptType.Username:
                 if (prompt.length() < 50 && prompt.length() > 0) 
                 { 
-                    int empID = dataHandler.verifyUsername(prompt);
-                    if (empID != -1)
-                    {
-                        if (prompt.contains(" ") && prompt.indexOf(" ") != prompt.length() - 1)
-                        { 
+                    if (prompt.contains(" ") && prompt.indexOf(" ") != prompt.length() - 1)
+                    { 
+                        int empID = dataHandler.verifyUsername(prompt);
+                        if (empID != -1)
+                        {
                             currentEmpID = empID;
                             validPrompt = true;
                         }
-                        else { currentInvalidPromptWarning = "Username must be a first and last named separated by a space"; }
+                        else { currentInvalidPromptWarning = "Username not found"; }
                     }
-                    else { currentInvalidPromptWarning = "Username not found"; }
+                    else { currentInvalidPromptWarning = "Username must be a first and last named separated by a space"; }
                 }
                 else { currentInvalidPromptWarning = "Username is too long or short"; }
                 break;
@@ -301,13 +296,14 @@ public class UserInterface {
             // =============== EMPLOYEE SEARCH =============== //
 
             case PromptType.SearchEmpName:
+                currentSearchedParams = new String[] { "next", "next", "next", "next" };    
+            
                 if (prompt.equals("next")) 
                 { validPrompt = true; }
                 else if  (prompt.length() < 50 && prompt.length() > 0) 
                 { 
                     if (prompt.contains(" ") && prompt.indexOf(" ") != prompt.length() - 1)
                     {
-                        currentSearchedParams = new String[4];
                         currentSearchedParams[0] = prompt;
                         validPrompt = true;
                     }
@@ -351,39 +347,42 @@ public class UserInterface {
                 break;
             
             case PromptType.SearchEmpID:
-                currentMenu.setNextMenuKey("primaryAdmin");
-                if (prompt.length() > 0) 
+                if (prompt.equals("next")) 
+                { validPrompt = true; }
+                else if (prompt.length() > 0) 
                 {
                     try {
                         int num = Integer.parseInt(prompt);
                         if (num >= 0)
                         {
                             currentSearchedParams[3] = prompt;
-                            currentSearchedEmpID = dataHandler.checkIfEmployeeExists(currentSearchedParams);
-
-                            if (currentSearchedEmpID < 0)
-                            {
-                                if (currentSearchedEmpID == -1)
-                                { currentMenu.setNextMenuKey("searchEmpErrorNoEmployeesFound"); }
-                                if (currentSearchedEmpID == -2)
-                                { currentMenu.setNextMenuKey("searchEmpErrorMultipleEmployeesFound"); }
-                                if (currentSearchedEmpID == -3)
-                                { currentMenu.setNextMenuKey("searchEmpErrorNoSearchInfo"); }
-                            }
-                            else
-                            { currentMenu.setNextMenuKey("searchedEmployeeSummary"); }
-                            
                             validPrompt = true;
                         }
                     } catch (NumberFormatException nfe) {}
                 }
                 else { currentInvalidPromptWarning = "EmpID must be a number bigger than 0"; }
+
+                if (validPrompt) // Result of employee search
+                {
+                    currentSearchedEmpID = dataHandler.checkIfEmployeeExists(currentSearchedParams);
+                    if (currentSearchedEmpID < 0)
+                    {
+                        if (currentSearchedEmpID == -1)
+                        { currentMenu.setNextMenuKey("searchEmpErrorNoEmployeesFound"); }
+                        if (currentSearchedEmpID == -2)
+                        { currentMenu.setNextMenuKey("searchEmpErrorMultipleEmployeesFound"); }
+                        if (currentSearchedEmpID == -3)
+                        { currentMenu.setNextMenuKey("searchEmpErrorNoSearchInfo"); }
+                    }
+                    else
+                    { currentMenu.setNextMenuKey("searchedEmployeeSummary"); }
+                }
+
                 break;
 
             // =============== ADMIN SEARCH =============== //
 
-            case PromptType.SearchAdminEmpID:
-                currentMenu.setNextMenuKey("adminList");
+            case PromptType.RemoveAdminEmpID:
                 if (prompt.length() > 0) 
                 {
                     try {
@@ -392,17 +391,53 @@ public class UserInterface {
                         {
                             if (num != currentEmpID)
                             {
-                                String[] newParams = new String[] {"None", "None", "None", prompt};
+                                String[] newParams = new String[] {"next", "next", "next", prompt};
                                 currentSearchedEmpID = dataHandler.checkIfEmployeeExists(newParams);
 
+                                // Result of admin search
                                 if (currentSearchedEmpID < 0)
                                 {
                                     if (currentSearchedEmpID == -1)
                                     { currentMenu.setNextMenuKey("searchAdminErrorNoEmployeesFound"); }
-                                    if (currentSearchedEmpID == -2)
-                                    { currentMenu.setNextMenuKey("searchAdminErrorMultipleEmployeesFound"); }
-                                    if (currentSearchedEmpID == -3)
-                                    { currentMenu.setNextMenuKey("searchAdminErrorNoSearchInfo"); }
+                                }
+                                else
+                                {
+                                    dataHandler.removeAdmin(currentSearchedEmpID);
+                                    currentMenu.setNextMenuKey("adminList");
+                                }
+
+                                validPrompt = true;
+                            }
+                            else { currentInvalidPromptWarning = "Cannot remove yourself"; }
+                        }
+                        else { currentInvalidPromptWarning = "EmpID must be bigger or equal to 0"; }
+                    } catch (NumberFormatException nfe) {}
+                }
+                else { currentInvalidPromptWarning = "EmpID must be a number"; }
+                break;
+
+            case PromptType.AddAdminEmpID:
+                if (prompt.length() > 0) 
+                {
+                    try {
+                        int num = Integer.parseInt(prompt);
+                        if (num >= 0)
+                        {
+                            if (num != currentEmpID)
+                            {
+                                String[] newParams = new String[] {"next", "next", "next", prompt};
+                                currentSearchedEmpID = dataHandler.checkIfEmployeeExists(newParams);
+
+                                // Result of admin search
+                                if (currentSearchedEmpID < 0)
+                                {
+                                    if (currentSearchedEmpID == -1)
+                                    { currentMenu.setNextMenuKey("searchAdminErrorNoEmployeesFound"); }
+                                }
+                                else
+                                {
+                                    dataHandler.addAdmin(currentSearchedEmpID);
+                                    currentMenu.setNextMenuKey("adminList");
                                 }
 
                                 validPrompt = true;
@@ -504,9 +539,9 @@ public class UserInterface {
             case PromptType.EditPhone:
                 if (prompt.equals("next")) 
                 { validPrompt = true; }
-                else if  (prompt.length() == 14) 
+                else if  (prompt.length() == 12) 
                 { validPrompt = true; }
-                if (!validPrompt) { currentInvalidPromptWarning = "Input number in the format (###)-###-####"; }
+                if (!validPrompt) { currentInvalidPromptWarning = "Input number in the format ###-###-####"; }
                 break;
 
             case PromptType.EditAddressStreet:

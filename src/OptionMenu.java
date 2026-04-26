@@ -28,7 +28,11 @@ public class OptionMenu extends Menu {
         // Name & Instructions
         System.out.println(menuTitle + "\n");
         if (menuHeader.length() != 0) { System.out.println(menuHeader); }
+    }
 
+    @Override
+    public void showOptions()
+    {
         // List Options
         for (int i = 0; i < options.length; i++)
         {

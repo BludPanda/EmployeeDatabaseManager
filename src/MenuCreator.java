@@ -192,7 +192,7 @@ public class MenuCreator {
                     "SEARCHED EMPLOYEE", 
                     "", 
                     options);
-                payStatements.setSqlQueryKey("printSearchedEmployeeSummary");
+                searchedEmployeeSummary.setSqlQueryKey("printSearchedEmployeeSummary");
                 menus.put("searchedEmployeeSummary", searchedEmployeeSummary);
                     
                     // EDIT EMPLOYEE PROMPTS
@@ -267,7 +267,7 @@ public class MenuCreator {
                         };
                         Menu viewUpdatedSalaries = new PromptMenu(
                             "UPDATED SALARIES", 
-                            "What percentage would you like to increase/decrease?",
+                            "",
                             prompts,
                             "primaryAdmin");
                         viewUpdatedSalaries.setSqlQueryKey("printUpdatedSalariesWithinRange");
@@ -275,8 +275,8 @@ public class MenuCreator {
 
             // LABOR REPORT
             options = new Option[] {
-                new Option("Report by Job Role", "laborReportJobRolePrompt"),
-                new Option("Report by Division", "laborReportDivisionPrompt"),
+                new Option("Report by Job Role", "viewLaborReportByJobRole"),
+                new Option("Report by Division", "viewLaborReportByDivision"),
                 new Option("Go Back", "primaryAdmin"),
             };
             Menu laborReport = new OptionMenu(
@@ -285,51 +285,29 @@ public class MenuCreator {
                 options);
             menus.put("laborReport", laborReport);
 
-                // LABOR REPORT JOB ROLE PROMPT
+                // VIEW LABOR REPORT JOB ROLE
                 prompts = new Prompt[] {
-                    new Prompt(PromptType.JobRoleOrDivision, "Enter Job Role")
+                    new Prompt(PromptType.Next, "Enter To Go Back")
                 };
-                Menu laborReportJobRolePrompt = new PromptMenu(
+                Menu viewLaborReportByJobRole = new PromptMenu(
                     "LABOR REPORT BY JOB ROLE", 
-                    "",
+                    "Total labor cost this on-going month:",
                     prompts,
-                    "viewLaborReportByJobRole");
-                menus.put("laborReportJobRolePrompt", laborReportJobRolePrompt);
+                    "laborReport");
+                viewLaborReportByJobRole.setSqlQueryKey("printTotalPayForThisMonthByJobRole");
+                menus.put("viewLaborReportByJobRole", viewLaborReportByJobRole);
 
-                    // VIEW LABOR REPORT JOB ROLE
-                    prompts = new Prompt[] {
-                        new Prompt(PromptType.Next, "Enter To Go Back")
-                    };
-                    Menu viewLaborReportByJobRole = new PromptMenu(
-                        "LABOR REPORT BY JOB ROLE", 
-                        "",
-                        prompts,
-                        "laborReport");
-                    viewLaborReportByJobRole.setSqlQueryKey("printTotalPayForThisMonthByJobRole");
-                    menus.put("viewLaborReportByJobRole", viewLaborReportByJobRole);
-
-                // LABOR REPORT DIVISION PROMPT
+                // VIEW LABOR REPORT JOB ROLE PROMPT
                 prompts = new Prompt[] {
-                    new Prompt(PromptType.JobRoleOrDivision, "Enter Division")
+                    new Prompt(PromptType.Next, "Enter To Go Back")
                 };
-                Menu laborReportDivisionPrompt = new PromptMenu(
+                Menu viewLaborReportByDivision = new PromptMenu(
                     "LABOR REPORT BY DIVISION", 
-                    "",
+                    "Total labor cost this on-going month:",
                     prompts,
-                    "viewLaborReportByDivision");
-                menus.put("laborReportDivisionPrompt", laborReportDivisionPrompt);
-
-                    // VIEW LABOR REPORT JOB ROLE PROMPT
-                    prompts = new Prompt[] {
-                        new Prompt(PromptType.Next, "Enter To Go Back")
-                    };
-                    Menu viewLaborReportByDivision = new PromptMenu(
-                        "LABOR REPORT BY DIVISION", 
-                        "",
-                        prompts,
-                        "laborReport");
-                    viewLaborReportByDivision.setSqlQueryKey("printTotalPayForThisMonthByDivision");
-                    menus.put("viewLaborReportByDivision", viewLaborReportByDivision);
+                    "laborReport");
+                viewLaborReportByDivision.setSqlQueryKey("printTotalPayForThisMonthByDivision");
+                menus.put("viewLaborReportByDivision", viewLaborReportByDivision);
 
             // ADMIN LIST
             options = new Option[] {
@@ -346,7 +324,7 @@ public class MenuCreator {
 
                 // REMOVE ADMIN PROMPT
                 prompts = new Prompt[] {
-                    new Prompt(PromptType.SearchAdminEmpID, "Enter EmpID"),
+                    new Prompt(PromptType.RemoveAdminEmpID, "Enter EmpID"),
                 };
                 Menu removeAdmin = new PromptMenu(
                     "REMOVE ADMIN", 
@@ -357,7 +335,7 @@ public class MenuCreator {
 
                 // ADD ADMIN PROMPT
                 prompts = new Prompt[] {
-                    new Prompt(PromptType.SearchAdminEmpID, "Enter EmpID"),
+                    new Prompt(PromptType.AddAdminEmpID, "Enter EmpID"),
                 };
                 Menu addAdmin = new PromptMenu(
                     "ADD ADMIN", 
@@ -375,21 +353,5 @@ public class MenuCreator {
                 "No employees found", prompts,
                     "adminList");
                 menus.put("searchAdminErrorNoEmployeesFound", searchAdminErrorNoEmployeesFound);
-                
-                // Multiple search error info
-                prompts = new Prompt[] {
-                new Prompt(PromptType.Next, "Enter To Go Back") };
-                Menu searchAdminErrorMultipleEmployeesFound = new PromptMenu("SEARCH ERROR",
-                "Multiple employees found, refine your search", prompts,
-                    "adminList");
-                menus.put("searchAdminErrorMultipleEmployeesFound", searchAdminErrorMultipleEmployeesFound);
-
-                // No search info error
-                prompts = new Prompt[] {
-                new Prompt(PromptType.Next, "Enter To Go Back") };
-                Menu searchAdminErrorNoSearchInfo = new PromptMenu("SEARCH ERROR",
-                "No search info was provided", prompts,
-                    "adminList");
-                menus.put("searchAdminErrorNoSearchInfo", searchAdminErrorNoSearchInfo);
     }
 }
